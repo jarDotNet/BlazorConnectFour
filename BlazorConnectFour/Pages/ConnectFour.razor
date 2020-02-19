@@ -1,0 +1,69 @@
+﻿@page "/connectfour"
+
+@using BlazorConnectFour.Data
+
+<h1>Connect Four</h1>
+
+@if (board.WinnerManager.IsThereAWinner())
+{
+<h2>@board.TurnManager.CurrentTurn.Emoji @board.WinnerManager.Winner Wins! <button class="btn btn-success" @onclick="@(() => Reset())">Reset</button></h2>
+}
+else if (board.IsComplete())
+{
+    <h2>No Winner. Try again! <button class="btn btn-success" @onclick="@(() => Reset())">Reset</button></h2>
+}
+else
+{
+<h2>@board.TurnManager.CurrentTurn.Emoji @board.TurnManager.CurrentTurn.Color's Turn!</h2>
+}
+
+<div class="board">
+    @for (int i = 0; i < board.LengthX; i++)
+    {
+        <div class="column">
+            @for (int j = 0; j < board.LengthY; j++)
+            {
+                var x = i; //Need to declare these variables so they can be persisted.
+                var y = j;
+                <div class="gamepiece @board.Board[i, j].Color.ToString().ToLower()"
+                     @onclick="@(() => DiscDropped(x, y))"></div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    GameBoard board = new GameBoard();
+
+    private void DiscDropped(int x, int y)
+    {
+        if (board.WinnerManager.IsThereAWinner()) { return; }
+
+        var currentSlot = board.Board[x, y];
+
+        //The piece must "fall" to the lowest unoccupied space in the clicked column
+        if (currentSlot.IsEmpty())
+        {
+            while (currentSlot.IsEmpty() && board.IsYPositionInsideBoard(y))
+            {
+                var nextSlot= board.Board[x, ++y];
+                if (nextSlot.IsEmpty())
+                    currentSlot = nextSlot;
+            }
+
+            currentSlot.Color = board.TurnManager.CurrentTurn.Color;
+
+            board.CheckWinner();
+
+            if (false == board.WinnerManager.IsThereAWinner())
+            {
+                board.TurnManager.SwitchTurns();
+            }
+        }
+    }
+
+    private void Reset()
+    {
+        board = new GameBoard();
+    }
+}
